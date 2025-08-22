@@ -1,7 +1,10 @@
 using api_cinema_challenge.Data;
+using api_cinema_challenge.DTOs.CustomerDTOs;
 using api_cinema_challenge.Endpoints;
 using api_cinema_challenge.Models;
 using api_cinema_challenge.Repository;
+using api_cinema_challenge.Validators;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using System.Diagnostics;
@@ -18,6 +21,7 @@ builder.Services.AddDbContext<CinemaContext>(options => {
 });
 
 builder.Services.AddScoped<IRepository<Customer>, Repository<Customer>>();
+builder.Services.AddValidatorsFromAssemblyContaining(typeof(CustomerPostValidator));
 
 var app = builder.Build();
 

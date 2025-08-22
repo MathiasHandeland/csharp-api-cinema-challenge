@@ -1,6 +1,7 @@
 ﻿using api_cinema_challenge.DTOs.CustomerDTOs;
 using api_cinema_challenge.Models;
 using api_cinema_challenge.Repository;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -12,9 +13,30 @@ namespace api_cinema_challenge.Endpoints
         {
             var customers = app.MapGroup("customers");
 
+            customers.MapGet("/{id}", GetCustomerById);
             customers.MapGet("/", GetCustomers);
             customers.MapPost("/", AddCustomer);
+           // customers.MapDelete("/{id}"DeleteCustomer);
 
+        }
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public static async Task<IResult> GetCustomerById(int id, IRepository<Customer> repository)
+        {
+            var customers = await repository.GetAll();
+            var targetCustomer = customers.FirstOrDefault(c => c.Id == id);
+            if (targetCustomer == null) { return TypedResults.NotFound($"Customer with id {id} not found."); }
+
+            var customerDto = new CustomerDto
+            {
+                Id = targetCustomer.Id,
+                Name = targetCustomer.Name,
+                Email = targetCustomer.Email,
+                Phone = targetCustomer.Phone
+            };
+
+            return TypedResults.Ok(customerDto);
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -38,14 +60,16 @@ namespace api_cinema_challenge.Endpoints
 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public static async Task<IResult> AddCustomer(IRepository<Customer> repository, [FromBody] CustomerPostDto model, HttpRequest request)
+        public static async Task<IResult> AddCustomer(IRepository<Customer> repository, [FromBody] CustomerPostDto model, IValidator<CustomerPostDto> validator, HttpRequest request)
         {
-            if (model == null) return TypedResults.BadRequest("Invalid customer data");
-            if (string.IsNullOrWhiteSpace(model.Name) || string.IsNullOrWhiteSpace(model.Email)) return TypedResults.BadRequest("Invalid customer data");
-            
-            var phoneAttribute = new PhoneAttribute();
-            if (!phoneAttribute.IsValid(model.Phone))
-                return TypedResults.BadRequest("Invalid phone number format.");
+            if (model == null) { return TypedResults.BadRequest("Invalid customer data"); }
+
+            var validationResult = await validator.ValidateAsync(model);
+            if (!validationResult.IsValid)
+            {
+                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
+                return TypedResults.BadRequest(errors);
+            }
 
             var newCustomer = new Customer { Name = model.Name, Email = model.Email, Phone = model.Phone };
             var addedCustomer = await repository.Add(newCustomer);
@@ -53,10 +77,15 @@ namespace api_cinema_challenge.Endpoints
             var customerDto = new CustomerDto { Id = addedCustomer.Id, Name = addedCustomer.Name, Email=addedCustomer.Email, Phone = addedCustomer.Phone };
 
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
-            var location = $"{baseUrl}/patients/{addedCustomer.Id}";
+            var location = $"{baseUrl}/customers/{addedCustomer.Id}";
             return TypedResults.Created(location, customerDto);
-
+        
         }
 
+        public static async Task<IResult> DeleteCustomer(int id, IRepository<Customer> repository)
+        {
+            throw new NotImplementedException();
+
+        }
     }
 }

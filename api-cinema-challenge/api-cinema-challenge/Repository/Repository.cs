@@ -23,14 +23,22 @@ namespace api_cinema_challenge.Repository
             return entity;
         }
 
-        public async Task<T> Delete(int id)
+        public async Task<T> Delete(object id)
         {
-            throw new NotImplementedException();
+            T entity = await _table.FindAsync(id);
+            _table.Remove(entity);
+            await _db.SaveChangesAsync();
+            return entity;
         }
 
         public async Task<IEnumerable<T>> GetAll()
         {
             return await _table.ToListAsync();
+        }
+
+        public async Task<T> GetById(int id)
+        {
+            return await _table.FindAsync(id);
         }
 
         public async Task<IEnumerable<T>> GetWithIncludes(params Expression<Func<T, object>>[] includes)
