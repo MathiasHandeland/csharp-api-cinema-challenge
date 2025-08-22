@@ -31,7 +31,15 @@ namespace api_cinema_challenge.Endpoints
         public static async Task<IResult> GetMovieById(int id, IRepository<Movie> repository)
         {
             var targetMovie = await repository.GetById(id);
-            if (targetMovie == null) { return TypedResults.NotFound($"Movie with id {id} not found."); }
+            if (targetMovie == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"Movie with id {id} not found."
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
 
             var movieDto = new MovieDto
             {
@@ -44,7 +52,13 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = targetMovie.UpdatedAt
             };
 
-            return TypedResults.Ok(movieDto);
+            var response = new
+            {
+                status = "success",
+                data = movieDto
+            };
+
+            return TypedResults.Ok(response);
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -52,7 +66,16 @@ namespace api_cinema_challenge.Endpoints
         public static async Task<IResult> GetMovies(IRepository<Movie> repository)
         {
             var movies = await repository.GetAll();
-            if (movies == null || !movies.Any()) { return Results.NotFound("No movies found."); }
+            if (movies == null || !movies.Any())
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = "No movies found."
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
+
             var movieDtos = movies.Select(m => new MovieDto
             {
                 Id = m.Id,
@@ -64,20 +87,35 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = m.UpdatedAt
             }).ToList();
 
-            return TypedResults.Ok(movieDtos);
+            var response = new
+            {
+                status = "success",
+                data = movieDtos
+            };
+
+            return TypedResults.Ok(response);
+
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public static async Task<IResult> AddMovie(IRepository<Movie> repository, [FromBody] MoviePostDto model, HttpRequest request, IValidator<MoviePostDto> validator)
         {
-            if (model == null) { return TypedResults.BadRequest("Invalid movie data"); }
+            if (model == null)
+            {
+                var errorResponse = new { status = "error", message = "Invalid movie data" };
+                return TypedResults.BadRequest(errorResponse);
+            }
 
             var validationResult = await validator.ValidateAsync(model);
             if (!validationResult.IsValid)
             {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return TypedResults.BadRequest(errors);
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage))
+                };
+                return TypedResults.BadRequest(errorResponse);
             }
 
             var newMovie = new Movie { Title = model.Title, Rating = model.Rating, Description = model.Description, RuntimeMins = model.RuntimeMins };
@@ -85,9 +123,15 @@ namespace api_cinema_challenge.Endpoints
 
             var movieDto = new MovieDto { Id = addedMovie.Id, Title = addedMovie.Title, Rating = addedMovie.Rating, Description = addedMovie.Description, RuntimeMins = addedMovie.RuntimeMins, CreatedAt = addedMovie.CreatedAt, UpdatedAt = addedMovie.UpdatedAt };
 
+            var response = new
+            {
+                status = "success",
+                data = movieDto
+            };
+
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var location = $"{baseUrl}/movies/{addedMovie.Id}";
-            return TypedResults.Created(location, movieDto);
+            return TypedResults.Created(location, response);
 
         }
 
@@ -96,8 +140,11 @@ namespace api_cinema_challenge.Endpoints
         public static async Task<IResult> DeleteMovie(int id, IRepository<Movie> repository)
         {
             var targetMovie = await repository.GetById(id);
-            if (targetMovie == null) { return TypedResults.NotFound($"Movie with id {id} not found."); }
-
+            if (targetMovie == null)
+            {
+                var errorResponse = new { status = "error", message = $"Movie with id {id} not found." };
+                return TypedResults.NotFound(errorResponse);
+            }
             var deletedMovie = await repository.Delete(id);
 
             var movieDto = new MovieDto
@@ -111,7 +158,13 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = deletedMovie.UpdatedAt
             };
 
-            return TypedResults.Ok(movieDto);
+            var response = new
+            {
+                status = "success",
+                data = movieDto
+            };
+
+            return TypedResults.Ok(response);
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -121,22 +174,38 @@ namespace api_cinema_challenge.Endpoints
         {
             // check if the movie we want to update exists
             var existingMovie = await repository.GetById(id);
-            if (existingMovie == null) { return TypedResults.NotFound($"The movie you want to update with ID {id} does not exist"); }
+            if (existingMovie == null)
+            {
+                var errorResponse = new { status = "error", message = $"The movie you want to update with ID {id} does not exist" };
+                return TypedResults.NotFound(errorResponse);
+            }
 
-            if (model == null) { return TypedResults.BadRequest("Invalid movie data"); }
+            if (model == null)
+            {
+                var errorResponse = new { status = "error", message = "Invalid movie data" };
+                return TypedResults.BadRequest(errorResponse);
+            }
 
             var validationResult = await validator.ValidateAsync(model);
             if (!validationResult.IsValid)
             {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return TypedResults.BadRequest(errors);
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage))
+                };
+                return TypedResults.BadRequest(errorResponse);
             }
 
             // check if the new title already exists for another movie
             var allMovies = await repository.GetAll();
             var duplicateTitleMovie = allMovies.FirstOrDefault(
                 m => m.Title == model.Title && m.Id != id);
-            if (duplicateTitleMovie != null) { return TypedResults.BadRequest($"A movie with the title '{model.Title}' already exists."); }
+            if (duplicateTitleMovie != null)
+            {
+                var errorResponse = new { status = "error", message = $"A movie with the title '{model.Title}' already exists." };
+                return TypedResults.BadRequest(errorResponse);
+            }
 
             // update the movie
             if (!string.IsNullOrWhiteSpace(model.Title)) existingMovie.Title = model.Title;
@@ -152,9 +221,15 @@ namespace api_cinema_challenge.Endpoints
             // generate respone dto
             var movieDto = new MovieDto { Id = updatedMovie.Id, Title = updatedMovie.Title, Rating = updatedMovie.Rating, Description = updatedMovie.Description, RuntimeMins = updatedMovie.RuntimeMins, CreatedAt = updatedMovie.CreatedAt, UpdatedAt = updatedMovie.UpdatedAt };
 
+            var response = new
+            {
+                status = "success",
+                data = movieDto
+            };
+
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var location = $"{baseUrl}/movies/{updatedMovie.Id}";
-            return TypedResults.Created(location, movieDto);
+            return TypedResults.Created(location, response);
 
         }
 
@@ -167,7 +242,14 @@ namespace api_cinema_challenge.Endpoints
             var filteredScreenings = screenings.Where(s => s.MovieId == id).ToList();
 
             if (!filteredScreenings.Any())
-                return TypedResults.NotFound($"No screenings found for movie with id {id}.");
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"No screenings found for movie with id {id}."
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
 
             var screeningDtos = filteredScreenings.Select(s => new ScreeningDto
             {
@@ -179,20 +261,34 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = s.UpdatedAt
             }).ToList();
 
-            return TypedResults.Ok(screeningDtos);
+            var response = new
+            {
+                status = "success",
+                data = screeningDtos
+            };
+
+            return TypedResults.Ok(response);
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public static async Task<IResult> AddScreeningForMovie(int id, IRepository<Screening> screeningRepository, [FromBody] ScreeningPostDto model, IValidator<ScreeningPostDto> validator, HttpRequest request)
         {
-            if (model == null) { return TypedResults.BadRequest("Invalid screening data"); }
-            var validationResult = await validator.ValidateAsync(model);
+            if (model == null)
+            {
+                var errorResponse = new { status = "error", message = "Invalid screening data" };
+                return TypedResults.BadRequest(errorResponse);
+            }
 
+            var validationResult = await validator.ValidateAsync(model);
             if (!validationResult.IsValid)
             {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return TypedResults.BadRequest(errors);
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage))
+                };
+                return TypedResults.BadRequest(errorResponse);
             }
 
             var newScreening = new Screening
@@ -215,9 +311,15 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = addedScreening.UpdatedAt
             };
 
+            var response = new
+            {
+                status = "success",
+                data = screeningDto
+            };
+
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var location = $"{baseUrl}/movies/{id}/screenings/{addedScreening.Id}";
-            return TypedResults.Created(location, screeningDto);
+            return TypedResults.Created(location, response);
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -226,7 +328,14 @@ namespace api_cinema_challenge.Endpoints
         {
             var screening = await screeningRepository.GetById(screeningId);
             if (screening == null || screening.MovieId != movieId)
-                return TypedResults.NotFound($"Screening with id {screeningId} for movie {movieId} not found.");
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"Screening with id {screeningId} for movie {movieId} not found."
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
 
             var screeningDto = new ScreeningDto
             {
@@ -238,7 +347,13 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = screening.UpdatedAt
             };
 
-            return TypedResults.Ok(screeningDto);
+            var response = new
+            {
+                status = "success",
+                data = screeningDto
+            };
+
+            return TypedResults.Ok(response);
         }
     }
 }
