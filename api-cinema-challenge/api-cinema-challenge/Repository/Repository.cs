@@ -18,7 +18,9 @@ namespace api_cinema_challenge.Repository
 
         public async Task<T> Add(T entity)
         {
-            throw new NotImplementedException();
+            await _table.AddAsync(entity);
+            await _db.SaveChangesAsync();
+            return entity;
         }
 
         public async Task<T> Delete(int id)
@@ -29,11 +31,6 @@ namespace api_cinema_challenge.Repository
         public async Task<IEnumerable<T>> GetAll()
         {
             return await _table.ToListAsync();
-        }
-
-        public async Task<T> GetById(int id)
-        {
-            throw new NotImplementedException();
         }
 
         public async Task<IEnumerable<T>> GetWithIncludes(params Expression<Func<T, object>>[] includes)

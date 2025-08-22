@@ -1,6 +1,6 @@
 ﻿namespace api_cinema_challenge.DTOs.CustomerDTOs
 {
-    public class CustomerGetDto
+    public class CustomerDto
     {
         public int Id { get; set; }
         public required string Name { get; set; }
