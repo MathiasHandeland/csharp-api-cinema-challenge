@@ -82,6 +82,8 @@ namespace api_cinema_challenge.Endpoints
         
         }
 
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> DeleteCustomer(int id, IRepository<Customer> repository)
         {
             var targetCustomer = await repository.GetById(id);
@@ -100,7 +102,9 @@ namespace api_cinema_challenge.Endpoints
             return TypedResults.Ok(customerDto);
         }
 
-
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> UpdateCustomer(int id, IRepository<Customer> repository, [FromBody] CustomerPutDto model, IValidator<CustomerPutDto> validator, HttpRequest request)
         {
             // check if the customer we want to update exists

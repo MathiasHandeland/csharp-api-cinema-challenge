@@ -1,7 +1,7 @@
 ﻿using api_cinema_challenge.DTOs.CustomerDTOs;
 using FluentValidation;
 
-namespace api_cinema_challenge.Validators
+namespace api_cinema_challenge.Validators.CustomerValidators
 {
     public class CustomerPostValidator : AbstractValidator<CustomerPostDto>
     {

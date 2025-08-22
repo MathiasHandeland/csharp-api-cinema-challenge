@@ -1,9 +1,11 @@
 using api_cinema_challenge.Data;
 using api_cinema_challenge.DTOs.CustomerDTOs;
+using api_cinema_challenge.DTOs.MovieDTOs;
 using api_cinema_challenge.Endpoints;
 using api_cinema_challenge.Models;
 using api_cinema_challenge.Repository;
-using api_cinema_challenge.Validators;
+using api_cinema_challenge.Validators.CustomerValidators;
+using api_cinema_challenge.Validators.MovieValidators;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -25,6 +27,8 @@ builder.Services.AddScoped<IRepository<Movie>, Repository<Movie>>();
 // Register validators as services
 builder.Services.AddScoped<IValidator<CustomerPostDto>, CustomerPostValidator>();
 builder.Services.AddScoped<IValidator<CustomerPutDto>, CustomerPutValidator>();
+builder.Services.AddScoped<IValidator<MoviePostDto>, MoviePostValidator>();
+
 
 var app = builder.Build();
 
