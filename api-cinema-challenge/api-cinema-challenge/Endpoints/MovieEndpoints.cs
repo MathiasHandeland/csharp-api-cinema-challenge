@@ -1,5 +1,4 @@
-﻿using api_cinema_challenge.DTOs.CustomerDTOs;
-using api_cinema_challenge.DTOs.MovieDTOs;
+﻿using api_cinema_challenge.DTOs.MovieDTOs;
 using api_cinema_challenge.Models;
 using api_cinema_challenge.Repository;
 using FluentValidation;
@@ -17,6 +16,7 @@ namespace api_cinema_challenge.Endpoints
             movies.MapGet("/", GetMovies);
             movies.MapPost("/", AddMovie);
             movies.MapDelete("/{id}", DeleteMovie);
+            movies.MapPut("/{id}", UpdateMovie);
 
         }
 
@@ -100,6 +100,47 @@ namespace api_cinema_challenge.Endpoints
             };
 
             return TypedResults.Ok(movieDto);
+        }
+
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public static async Task<IResult> UpdateMovie(int id, IRepository<Movie> repository, [FromBody] MoviePutDto model, IValidator<MoviePutDto> validator, HttpRequest request)
+        {
+            // check if the movie we want to update exists
+            var existingMovie = await repository.GetById(id);
+            if (existingMovie == null) { return TypedResults.NotFound($"The movie you want to update with ID {id} does not exist"); }
+
+            if (model == null) { return TypedResults.BadRequest("Invalid movie data"); }
+
+            var validationResult = await validator.ValidateAsync(model);
+            if (!validationResult.IsValid)
+            {
+                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
+                return TypedResults.BadRequest(errors);
+            }
+
+            // check if the new title already exists for another movie
+            var allMovies = await repository.GetAll();
+            var duplicateTitleMovie = allMovies.FirstOrDefault(
+                m => m.Title == model.Title && m.Id != id);
+            if (duplicateTitleMovie != null) { return TypedResults.BadRequest($"A movie with the title '{model.Title}' already exists."); }
+
+            // update the movie
+            if (model.Title is not null) existingMovie.Title = model.Title;
+            if (model.Rating is not null) existingMovie.Rating = model.Rating;
+            if (model.Description is not null) existingMovie.Description = model.Description;
+            if (model.RuntimeMins is not null) existingMovie.RuntimeMins = model.RuntimeMins.Value;
+
+            var updatedMovie = await repository.Update(id, existingMovie);
+
+            // generate respone dto
+            var movieDto = new MovieDto { Id = updatedMovie.Id, Title = updatedMovie.Title, Rating = updatedMovie.Rating, Description = updatedMovie.Description, RuntimeMins = updatedMovie.RuntimeMins };
+
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+            var location = $"{baseUrl}/movies/{updatedMovie.Id}";
+            return TypedResults.Created(location, movieDto);
+
         }
     }
 }

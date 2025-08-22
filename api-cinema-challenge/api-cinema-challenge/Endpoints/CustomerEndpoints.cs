@@ -127,9 +127,9 @@ namespace api_cinema_challenge.Endpoints
             if (duplicateNameCustomer != null) { return TypedResults.BadRequest($"A customer with the name '{model.Name}' already exists."); }
 
             // update the customer
-            existingCustomer.Name = model.Name;
-            existingCustomer.Email = model.Email;
-            existingCustomer.Phone = model.Phone;
+            if (model.Name is not null) existingCustomer.Name = model.Name;
+            if (model.Email is not null) existingCustomer.Email = model.Email;
+            if (model.Phone is not null) existingCustomer.Phone = model.Phone;
 
             var updatedCustomer = await repository.Update(id, existingCustomer);
 

@@ -28,7 +28,7 @@ builder.Services.AddScoped<IRepository<Movie>, Repository<Movie>>();
 builder.Services.AddScoped<IValidator<CustomerPostDto>, CustomerPostValidator>();
 builder.Services.AddScoped<IValidator<CustomerPutDto>, CustomerPutValidator>();
 builder.Services.AddScoped<IValidator<MoviePostDto>, MoviePostValidator>();
-
+builder.Services.AddScoped<IValidator<MoviePutDto>, MoviePutValidator>();
 
 var app = builder.Build();
 
