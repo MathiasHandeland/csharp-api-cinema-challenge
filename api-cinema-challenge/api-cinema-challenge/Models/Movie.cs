@@ -31,5 +31,8 @@ namespace api_cinema_challenge.Models
 
         [Column("UpdatedAt")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // Navigation property for related screenings
+        public ICollection<Screening> Screenings { get; set; }
     }
 }
