@@ -10,7 +10,7 @@ namespace api_cinema_challenge.Repository
         Task<T> Add(T entity);
         Task<T> Update(int id, T entity);
 
-        Task<IEnumerable<T>> GetWithIncludes(params Expression<Func<T, object>>[] includes);
+        Task<IEnumerable<T>> GetWithIncludes(Func<IQueryable<T>, IQueryable<T>> includeQuery); // used for dynamic includes
 
     }
 }

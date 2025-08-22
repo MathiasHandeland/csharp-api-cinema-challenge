@@ -41,17 +41,17 @@ namespace api_cinema_challenge.Repository
             return await _table.FindAsync(id);
         }
 
-        public async Task<IEnumerable<T>> GetWithIncludes(params Expression<Func<T, object>>[] includes)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<T> Update(int id, T entity)
         {
             _table.Attach(entity);
             _db.Entry(entity).State = EntityState.Modified;
             await _db.SaveChangesAsync();
             return await _table.FindAsync(id);
+        }
+        public async Task<IEnumerable<T>> GetWithIncludes(Func<IQueryable<T>, IQueryable<T>> includeQuery) // used for dynamic includes
+        {
+            IQueryable<T> query = includeQuery(_table);
+            return await query.ToListAsync();
         }
     }
 }

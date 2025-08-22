@@ -99,7 +99,7 @@ namespace api_cinema_challenge.Endpoints
 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public static async Task<IResult> AddMovie(IRepository<Movie> repository, [FromBody] MoviePostDto model, HttpRequest request, IValidator<MoviePostDto> validator)
+        public static async Task<IResult> AddMovie(IRepository<Movie> repository, [FromBody] MoviePostDto model, HttpRequest request, IValidator<MoviePostDto> validator, IRepository<Screening> screeningRepository)
         {
             if (model == null)
             {
@@ -120,6 +120,22 @@ namespace api_cinema_challenge.Endpoints
 
             var newMovie = new Movie { Title = model.Title, Rating = model.Rating, Description = model.Description, RuntimeMins = model.RuntimeMins };
             var addedMovie = await repository.Add(newMovie);
+
+            // add optional screenings
+            if (model.Screenings != null && model.Screenings.Any())
+            {
+                foreach (var screeningDto in model.Screenings)
+                {
+                    var newScreening = new Screening
+                    {
+                        ScreenNumber = screeningDto.ScreenNumber,
+                        Capacity = screeningDto.Capacity,
+                        StartsAt = screeningDto.StartsAt,
+                        MovieId = addedMovie.Id
+                    };
+                    await screeningRepository.Add(newScreening);
+                }
+            }
 
             var movieDto = new MovieDto { Id = addedMovie.Id, Title = addedMovie.Title, Rating = addedMovie.Rating, Description = addedMovie.Description, RuntimeMins = addedMovie.RuntimeMins, CreatedAt = addedMovie.CreatedAt, UpdatedAt = addedMovie.UpdatedAt };
 
