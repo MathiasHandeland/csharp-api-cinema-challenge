@@ -26,7 +26,15 @@ namespace api_cinema_challenge.Endpoints
         public static async Task<IResult> GetCustomerById(int id, IRepository<Customer> repository)
         {
             var targetCustomer = await repository.GetById(id);
-            if (targetCustomer == null) { return TypedResults.NotFound($"Customer with id {id} not found."); }
+            if (targetCustomer == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"Customer with id {id} not found."
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
 
             var customerDto = new CustomerDto
             {
@@ -38,7 +46,13 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = targetCustomer.UpdatedAt
             };
 
-            return TypedResults.Ok(customerDto);
+            var response = new
+            {
+                status = "success",
+                data = customerDto
+            };
+
+            return TypedResults.Ok(response);
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -46,11 +60,17 @@ namespace api_cinema_challenge.Endpoints
         public static async Task<IResult> GetCustomers(IRepository<Customer> repository)
         {
             var customers = await repository.GetAll();
-            if (customers == null || !customers.Any()) { return Results.NotFound("No customers found."); }
-
-            var customerDto = customers.Select(c => new CustomerDto
+            if (customers == null || !customers.Any())
             {
-                Id = c.Id,
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = "No customers found."
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
+
+            var customerDto = customers.Select(c => new CustomerDto { Id = c.Id,
                 Name = c.Name,
                 Email = c.Email,
                 Phone = c.Phone,
@@ -58,7 +78,13 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = c.UpdatedAt
             }).ToList();
 
-            return TypedResults.Ok(customerDto);
+            var response = new
+            {
+                status = "success",
+                data = customerDto
+            };
+
+            return TypedResults.Ok(response);
 
         }
 
@@ -71,8 +97,12 @@ namespace api_cinema_challenge.Endpoints
             var validationResult = await validator.ValidateAsync(model);
             if (!validationResult.IsValid)
             {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return TypedResults.BadRequest(errors);
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage))
+                };
+                return TypedResults.BadRequest(errorResponse);
             }
 
             var newCustomer = new Customer { Name = model.Name, Email = model.Email, Phone = model.Phone };
@@ -80,9 +110,15 @@ namespace api_cinema_challenge.Endpoints
 
             var customerDto = new CustomerDto { Id = addedCustomer.Id, Name = addedCustomer.Name, Email=addedCustomer.Email, Phone = addedCustomer.Phone, CreatedAt = addedCustomer.CreatedAt, UpdatedAt = addedCustomer.UpdatedAt };
 
+            var response = new
+            {
+                status = "success",
+                data = customerDto
+            };
+
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var location = $"{baseUrl}/customers/{addedCustomer.Id}";
-            return TypedResults.Created(location, customerDto);
+            return TypedResults.Created(location, response);
         
         }
 
@@ -91,7 +127,15 @@ namespace api_cinema_challenge.Endpoints
         public static async Task<IResult> DeleteCustomer(int id, IRepository<Customer> repository)
         {
             var targetCustomer = await repository.GetById(id);
-            if (targetCustomer == null) {  return TypedResults.NotFound($"Customer with id {id} not found."); }
+            if (targetCustomer == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"Customer with id {id} not found."
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
 
             var deletedCustomer = await repository.Delete(id);
 
@@ -105,7 +149,13 @@ namespace api_cinema_challenge.Endpoints
                 UpdatedAt = deletedCustomer.UpdatedAt
             };
 
-            return TypedResults.Ok(customerDto);
+            var response = new
+            {
+                status = "success",
+                data = customerDto
+            };
+
+            return TypedResults.Ok(response);
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -115,22 +165,50 @@ namespace api_cinema_challenge.Endpoints
         {
             // check if the customer we want to update exists
             var existingCustomer = await repository.GetById(id);
-            if (existingCustomer == null) { return TypedResults.NotFound($"The customer you want to update with ID {id} does not exist"); }
-            
-            if (model == null) { return TypedResults.BadRequest("Invalid customer data"); }
+            if (existingCustomer == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"The customer you want to update with ID {id} does not exist"
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
+
+            if (model == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = "Invalid customer data"
+                };
+                return TypedResults.BadRequest(errorResponse);
+            }
 
             var validationResult = await validator.ValidateAsync(model);
             if (!validationResult.IsValid)
             {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return TypedResults.BadRequest(errors);
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage))
+                };
+                return TypedResults.BadRequest(errorResponse);
             }
 
             // check if the new name already exists for another customer
             var allCustomers = await repository.GetAll();
             var duplicateNameCustomer = allCustomers.FirstOrDefault(
                 c => c.Name == model.Name && c.Id != id);
-            if (duplicateNameCustomer != null) { return TypedResults.BadRequest($"A customer with the name '{model.Name}' already exists."); }
+            if (duplicateNameCustomer != null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"A customer with the name '{model.Name}' already exists."
+                };
+                return TypedResults.BadRequest(errorResponse);
+            }
 
             // update the customer
             if (!string.IsNullOrWhiteSpace(model.Name)) existingCustomer.Name = model.Name;
@@ -145,9 +223,15 @@ namespace api_cinema_challenge.Endpoints
             // generate respone dto
             var customerDto = new CustomerDto { Id = updatedCustomer.Id, Name = updatedCustomer.Name, Email = updatedCustomer.Email, Phone = updatedCustomer.Phone };
 
+            var response = new
+            {
+                status = "success",
+                data = customerDto
+            };
+
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var location = $"{baseUrl}/customers/{updatedCustomer.Id}";
-            return TypedResults.Created(location, customerDto);
+            return TypedResults.Created(location, response);
 
         }
     }
