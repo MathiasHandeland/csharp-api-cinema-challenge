@@ -1,4 +1,5 @@
 ﻿using api_cinema_challenge.DTOs.MovieDTOs;
+using api_cinema_challenge.DTOs.ScreeningDTOs;
 using api_cinema_challenge.Models;
 using api_cinema_challenge.Repository;
 using FluentValidation;
@@ -17,6 +18,11 @@ namespace api_cinema_challenge.Endpoints
             movies.MapPost("/", AddMovie);
             movies.MapDelete("/{id}", DeleteMovie);
             movies.MapPut("/{id}", UpdateMovie);
+
+            // screening endpoints
+            movies.MapGet("/{id}/screenings", GetScreeningsForMovie);
+            movies.MapPost("/{id}/screenings", AddScreeningForMovie);
+            movies.MapGet("/{movieId}/screenings/{screeningId}", GetScreeningForMovie);
 
         }
 
@@ -150,6 +156,89 @@ namespace api_cinema_challenge.Endpoints
             var location = $"{baseUrl}/movies/{updatedMovie.Id}";
             return TypedResults.Created(location, movieDto);
 
+        }
+
+        // screening endpoints
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public static async Task<IResult> GetScreeningsForMovie(int id, IRepository<Screening> screeningRepository)
+        {
+            var screenings = await screeningRepository.GetAll();
+            var filteredScreenings = screenings.Where(s => s.MovieId == id).ToList();
+
+            if (!filteredScreenings.Any())
+                return TypedResults.NotFound($"No screenings found for movie with id {id}.");
+
+            var screeningDtos = filteredScreenings.Select(s => new ScreeningDto
+            {
+                Id = s.Id,
+                ScreenNumber = s.ScreenNumber,
+                Capacity = s.Capacity,
+                StartsAt = s.StartsAt,
+                CreatedAt = s.CreatedAt,
+                UpdatedAt = s.UpdatedAt
+            }).ToList();
+
+            return TypedResults.Ok(screeningDtos);
+        }
+
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public static async Task<IResult> AddScreeningForMovie(int id, IRepository<Screening> screeningRepository, [FromBody] ScreeningPostDto model, IValidator<ScreeningPostDto> validator, HttpRequest request)
+        {
+            if (model == null) { return TypedResults.BadRequest("Invalid screening data"); }
+            var validationResult = await validator.ValidateAsync(model);
+
+            if (!validationResult.IsValid)
+            {
+                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
+                return TypedResults.BadRequest(errors);
+            }
+
+            var newScreening = new Screening
+            {
+                ScreenNumber = model.ScreenNumber,
+                Capacity = model.Capacity,
+                StartsAt = model.StartsAt,
+                MovieId = id
+            };
+
+            var addedScreening = await screeningRepository.Add(newScreening);
+
+            var screeningDto = new ScreeningDto
+            {
+                Id = addedScreening.Id,
+                ScreenNumber = addedScreening.ScreenNumber,
+                Capacity = addedScreening.Capacity,
+                StartsAt = addedScreening.StartsAt,
+                CreatedAt = addedScreening.CreatedAt,
+                UpdatedAt = addedScreening.UpdatedAt
+            };
+
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+            var location = $"{baseUrl}/movies/{id}/screenings/{addedScreening.Id}";
+            return TypedResults.Created(location, screeningDto);
+        }
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public static async Task<IResult> GetScreeningForMovie(int movieId, int screeningId, IRepository<Screening> screeningRepository)
+        {
+            var screening = await screeningRepository.GetById(screeningId);
+            if (screening == null || screening.MovieId != movieId)
+                return TypedResults.NotFound($"Screening with id {screeningId} for movie {movieId} not found.");
+
+            var screeningDto = new ScreeningDto
+            {
+                Id = screening.Id,
+                ScreenNumber = screening.ScreenNumber,
+                Capacity = screening.Capacity,
+                StartsAt = screening.StartsAt,
+                CreatedAt = screening.CreatedAt,
+                UpdatedAt = screening.UpdatedAt
+            };
+
+            return TypedResults.Ok(screeningDto);
         }
     }
 }

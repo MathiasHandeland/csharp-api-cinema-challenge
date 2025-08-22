@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace api_cinema_challenge.Migrations
 {
     /// <inheritdoc />
-    public partial class RefactorSeedingAndModelsWithDateTime : Migration
+    public partial class InitialScreeningAndTimestamps : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -49,6 +49,30 @@ namespace api_cinema_challenge.Migrations
                     table.PrimaryKey("PK_Movies", x => x.MovieId);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Screenings",
+                columns: table => new
+                {
+                    ScreeningId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ScreenNumber = table.Column<int>(type: "integer", nullable: false),
+                    Capacity = table.Column<int>(type: "integer", nullable: false),
+                    StartsAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    MovieId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Screenings", x => x.ScreeningId);
+                    table.ForeignKey(
+                        name: "FK_Screenings_Movies_MovieId",
+                        column: x => x.MovieId,
+                        principalTable: "Movies",
+                        principalColumn: "MovieId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "Customers",
                 columns: new[] { "CustomerId", "CreatedAt", "CustomerEmail", "CustomerName", "CustomerPhone", "UpdatedAt" },
@@ -68,6 +92,21 @@ namespace api_cinema_challenge.Migrations
                     { 2, new DateTime(1999, 3, 31, 11, 1, 56, 633, DateTimeKind.Utc), "A computer hacker learns about the true nature of his reality.", "R", 136, "The Matrix", new DateTime(1999, 3, 31, 11, 1, 56, 633, DateTimeKind.Utc) },
                     { 3, new DateTime(2014, 11, 7, 11, 1, 56, 633, DateTimeKind.Utc), "A team of explorers travel through a wormhole in space.", "PG-13", 169, "Interstellar", new DateTime(2014, 11, 7, 11, 1, 56, 633, DateTimeKind.Utc) }
                 });
+
+            migrationBuilder.InsertData(
+                table: "Screenings",
+                columns: new[] { "ScreeningId", "Capacity", "CreatedAt", "MovieId", "ScreenNumber", "StartsAt", "UpdatedAt" },
+                values: new object[,]
+                {
+                    { 1, 40, new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc), 1, 5, new DateTime(2023, 3, 19, 11, 30, 0, 0, DateTimeKind.Utc), new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc) },
+                    { 2, 60, new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc), 2, 3, new DateTime(2023, 3, 20, 15, 0, 0, 0, DateTimeKind.Utc), new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc) },
+                    { 3, 30, new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc), 3, 7, new DateTime(2023, 3, 21, 18, 45, 0, 0, DateTimeKind.Utc), new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc) }
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Screenings_MovieId",
+                table: "Screenings",
+                column: "MovieId");
         }
 
         /// <inheritdoc />
@@ -75,6 +114,9 @@ namespace api_cinema_challenge.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Customers");
+
+            migrationBuilder.DropTable(
+                name: "Screenings");
 
             migrationBuilder.DropTable(
                 name: "Movies");

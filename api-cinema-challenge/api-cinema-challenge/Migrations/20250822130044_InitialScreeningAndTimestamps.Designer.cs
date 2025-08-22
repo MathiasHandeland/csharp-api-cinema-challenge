@@ -12,8 +12,8 @@ using api_cinema_challenge.Data;
 namespace api_cinema_challenge.Migrations
 {
     [DbContext(typeof(CinemaContext))]
-    [Migration("20250822113239_RefactorSeedingAndModelsWithDateTime")]
-    partial class RefactorSeedingAndModelsWithDateTime
+    [Migration("20250822130044_InitialScreeningAndTimestamps")]
+    partial class InitialScreeningAndTimestamps
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -162,6 +162,88 @@ namespace api_cinema_challenge.Migrations
                             Title = "Interstellar",
                             UpdatedAt = new DateTime(2014, 11, 7, 11, 1, 56, 633, DateTimeKind.Utc)
                         });
+                });
+
+            modelBuilder.Entity("api_cinema_challenge.Models.Screening", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("ScreeningId");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer")
+                        .HasColumnName("Capacity");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<int>("MovieId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScreenNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("ScreenNumber");
+
+                    b.Property<DateTime>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("StartsAt");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
+
+                    b.ToTable("Screenings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Capacity = 40,
+                            CreatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
+                            MovieId = 1,
+                            ScreenNumber = 5,
+                            StartsAt = new DateTime(2023, 3, 19, 11, 30, 0, 0, DateTimeKind.Utc),
+                            UpdatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Capacity = 60,
+                            CreatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
+                            MovieId = 2,
+                            ScreenNumber = 3,
+                            StartsAt = new DateTime(2023, 3, 20, 15, 0, 0, 0, DateTimeKind.Utc),
+                            UpdatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Capacity = 30,
+                            CreatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
+                            MovieId = 3,
+                            ScreenNumber = 7,
+                            StartsAt = new DateTime(2023, 3, 21, 18, 45, 0, 0, DateTimeKind.Utc),
+                            UpdatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc)
+                        });
+                });
+
+            modelBuilder.Entity("api_cinema_challenge.Models.Screening", b =>
+                {
+                    b.HasOne("api_cinema_challenge.Models.Movie", "Movie")
+                        .WithMany()
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
                 });
 #pragma warning restore 612, 618
         }
