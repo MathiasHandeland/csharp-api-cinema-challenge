@@ -1,4 +1,7 @@
 using api_cinema_challenge.Data;
+using api_cinema_challenge.Endpoints;
+using api_cinema_challenge.Models;
+using api_cinema_challenge.Repository;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using System.Diagnostics;
@@ -14,6 +17,8 @@ builder.Services.AddDbContext<CinemaContext>(options => {
     options.LogTo(message => Debug.WriteLine(message));
 });
 
+builder.Services.AddScoped<IRepository<Customer>, Repository<Customer>>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -28,5 +33,5 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.ConfigureCustomerEndpoint();
 app.Run();

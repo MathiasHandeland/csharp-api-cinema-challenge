@@ -37,10 +37,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Endpoints\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="appsettings.Development.json" />
   </ItemGroup>
 
