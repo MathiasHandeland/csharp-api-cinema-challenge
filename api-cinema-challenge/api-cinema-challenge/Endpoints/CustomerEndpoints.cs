@@ -16,7 +16,7 @@ namespace api_cinema_challenge.Endpoints
             customers.MapGet("/{id}", GetCustomerById);
             customers.MapGet("/", GetCustomers);
             customers.MapPost("/", AddCustomer);
-           // customers.MapDelete("/{id}"DeleteCustomer);
+            customers.MapDelete("/{id}", DeleteCustomer);
 
         }
 
@@ -84,8 +84,20 @@ namespace api_cinema_challenge.Endpoints
 
         public static async Task<IResult> DeleteCustomer(int id, IRepository<Customer> repository)
         {
-            throw new NotImplementedException();
+            var targetCustomer = await repository.GetById(id);
+            if (targetCustomer == null) {  return TypedResults.NotFound($"Customer with id {id} not found."); }
 
+            var deletedCustomer = await repository.Delete(id);
+
+            var customerDto = new CustomerDto
+            {
+                Id = deletedCustomer.Id,
+                Name = deletedCustomer.Name,
+                Email = deletedCustomer.Email,
+                Phone = deletedCustomer.Phone
+            };
+
+            return TypedResults.Ok(customerDto);
         }
     }
 }
