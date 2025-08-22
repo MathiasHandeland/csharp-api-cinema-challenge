@@ -17,6 +17,7 @@ namespace api_cinema_challenge.Endpoints
             customers.MapGet("/", GetCustomers);
             customers.MapPost("/", AddCustomer);
             customers.MapDelete("/{id}", DeleteCustomer);
+            customers.MapPut("/{id}", UpdateCustomer);
 
         }
 
@@ -98,6 +99,44 @@ namespace api_cinema_challenge.Endpoints
             };
 
             return TypedResults.Ok(customerDto);
+        }
+
+
+        public static async Task<IResult> UpdateCustomer(int id, IRepository<Customer> repository, [FromBody] CustomerPutDto model, IValidator<CustomerPutDto> validator, HttpRequest request)
+        {
+            // check if the customer we want to update exists
+            var existingCustomer = await repository.GetById(id);
+            if (existingCustomer == null) { return TypedResults.NotFound($"The customer you want to update with ID {id} does not exist"); }
+            
+            if (model == null) { return TypedResults.BadRequest("Invalid customer data"); }
+
+            var validationResult = await validator.ValidateAsync(model);
+            if (!validationResult.IsValid)
+            {
+                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
+                return TypedResults.BadRequest(errors);
+            }
+
+            // check if the new name already exists for another customer
+            var allCustomers = await repository.GetAll();
+            var duplicateNameCustomer = allCustomers.FirstOrDefault(
+                c => c.Name == model.Name && c.Id != id);
+            if (duplicateNameCustomer != null) { return TypedResults.BadRequest($"A customer with the name '{model.Name}' already exists."); }
+
+            // update the customer
+            existingCustomer.Name = model.Name;
+            existingCustomer.Email = model.Email;
+            existingCustomer.Phone = model.Phone;
+
+            var updatedCustomer = await repository.Update(id, existingCustomer);
+
+            // generate respone dto
+            var customerDto = new CustomerDto { Id = updatedCustomer.Id, Name = updatedCustomer.Name, Email = updatedCustomer.Email, Phone = updatedCustomer.Phone };
+
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+            var location = $"{baseUrl}/customers/{updatedCustomer.Id}";
+            return TypedResults.Created(location, customerDto);
+
         }
     }
 }

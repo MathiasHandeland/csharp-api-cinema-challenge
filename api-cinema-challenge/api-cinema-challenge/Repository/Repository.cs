@@ -46,9 +46,12 @@ namespace api_cinema_challenge.Repository
             throw new NotImplementedException();
         }
 
-        public async Task<T> Update(T entity)
+        public async Task<T> Update(int id, T entity)
         {
-            throw new NotImplementedException();
+            _table.Attach(entity);
+            _db.Entry(entity).State = EntityState.Modified;
+            _db.SaveChanges();
+            return await _table.FindAsync(id);
         }
     }
 }

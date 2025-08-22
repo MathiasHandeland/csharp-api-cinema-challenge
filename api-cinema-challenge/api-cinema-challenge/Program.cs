@@ -21,7 +21,9 @@ builder.Services.AddDbContext<CinemaContext>(options => {
 });
 
 builder.Services.AddScoped<IRepository<Customer>, Repository<Customer>>();
-builder.Services.AddValidatorsFromAssemblyContaining(typeof(CustomerPostValidator));
+// Register validators as services
+builder.Services.AddScoped<IValidator<CustomerPostDto>, CustomerPostValidator>();
+builder.Services.AddScoped<IValidator<CustomerPutDto>, CustomerPutValidator>();
 
 var app = builder.Build();
 
