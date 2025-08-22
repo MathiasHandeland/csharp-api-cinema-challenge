@@ -21,6 +21,7 @@ builder.Services.AddDbContext<CinemaContext>(options => {
 });
 
 builder.Services.AddScoped<IRepository<Customer>, Repository<Customer>>();
+builder.Services.AddScoped<IRepository<Movie>, Repository<Movie>>();
 // Register validators as services
 builder.Services.AddScoped<IValidator<CustomerPostDto>, CustomerPostValidator>();
 builder.Services.AddScoped<IValidator<CustomerPutDto>, CustomerPutValidator>();
@@ -40,4 +41,5 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.ConfigureCustomerEndpoint();
+app.ConfigureMovieEndpoint();
 app.Run();
