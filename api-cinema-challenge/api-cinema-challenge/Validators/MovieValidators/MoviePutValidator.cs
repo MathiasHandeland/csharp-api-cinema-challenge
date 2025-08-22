@@ -8,17 +8,27 @@ namespace api_cinema_challenge.Validators.MovieValidators
         public MoviePutValidator()
         {
             RuleFor(m => m.Title)
-                .NotEmpty().WithMessage("Title is required.");
+                .NotEmpty()
+                .When(m => m.Title != null)
+                .WithMessage("Title cannot be empty or whitespace.");
 
             RuleFor(m => m.Rating)
-                .NotEmpty().WithMessage("Rating is required.");
+                .NotEmpty()
+                .When(m => m.Rating != null)
+                .WithMessage("Rating cannot be empty or whitespace.");
 
             RuleFor(m => m.Description)
-                .NotEmpty().WithMessage("Description is required.")
-                .MaximumLength(500).WithMessage("Description must be at most 500 characters.");
+                .NotEmpty()
+                .When(m => m.Description != null)
+                .WithMessage("Description cannot be empty.")
+                .MaximumLength(500)
+                .When(m => m.Description != null)
+                .WithMessage("Description must be at most 500 characters.");
 
             RuleFor(m => m.RuntimeMins)
-                .GreaterThan(0).WithMessage("Runtime must be greater than 0 minutes.");
+                .GreaterThan(0)
+                .When(m => m.RuntimeMins != null)
+                .WithMessage("Runtime must be greater than 0 minutes.");
         }
     }
 }

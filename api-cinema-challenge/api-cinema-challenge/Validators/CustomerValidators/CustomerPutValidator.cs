@@ -8,17 +8,15 @@ namespace api_cinema_challenge.Validators.CustomerValidators
         public CustomerPutValidator()
         {
             RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("Name is required.")
-                .Must(name => !string.IsNullOrWhiteSpace(name)).WithMessage("Name cannot be whitespace.");
+                .NotEmpty().When(x => x.Name != null).WithMessage("Name cannot be empty or whitespace.");
 
             RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Email is required.")
-                .EmailAddress().WithMessage("Email must be a valid email address.");
+                .NotEmpty().When(x => x.Email != null).WithMessage("Email cannot be empty.")
+                .EmailAddress().When(x => x.Email != null).WithMessage("Email must be valid.");
 
             RuleFor(x => x.Phone)
-                .NotEmpty().WithMessage("Phone is required.")
-                .Matches(@"^\+?\d{7,15}$").WithMessage("Phone must be a valid phone number.");
-
+                .NotEmpty().When(x => x.Phone != null).WithMessage("Phone cannot be empty.")
+                .Matches(@"^\+?\d{7,15}$").When(x => x.Phone != null).WithMessage("Phone must be valid.");
         }
     }
 }

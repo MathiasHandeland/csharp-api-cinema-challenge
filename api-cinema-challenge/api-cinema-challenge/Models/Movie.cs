@@ -25,5 +25,11 @@ namespace api_cinema_challenge.Models
         [Required]
         [Column("RuntimeMinutes")]
         public int RuntimeMins { get; set; }
+
+        [Column("CreatedAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("UpdatedAt")]
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

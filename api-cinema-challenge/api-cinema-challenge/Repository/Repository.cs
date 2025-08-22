@@ -15,7 +15,6 @@ namespace api_cinema_challenge.Repository
             _table = db.Set<T>();
         }
 
-
         public async Task<T> Add(T entity)
         {
             await _table.AddAsync(entity);
@@ -26,6 +25,7 @@ namespace api_cinema_challenge.Repository
         public async Task<T> Delete(object id)
         {
             T entity = await _table.FindAsync(id);
+            if (entity == null) return null;
             _table.Remove(entity);
             await _db.SaveChangesAsync();
             return entity;
@@ -50,7 +50,7 @@ namespace api_cinema_challenge.Repository
         {
             _table.Attach(entity);
             _db.Entry(entity).State = EntityState.Modified;
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
             return await _table.FindAsync(id);
         }
     }

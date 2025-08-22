@@ -23,5 +23,11 @@ namespace api_cinema_challenge.Models
         [Column("CustomerPhone")]
         [Phone]
         public required string Phone { get; set; }
+
+        [Column("CreatedAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("UpdatedAt")]
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

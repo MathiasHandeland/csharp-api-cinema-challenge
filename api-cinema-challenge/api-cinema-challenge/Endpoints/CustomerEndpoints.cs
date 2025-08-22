@@ -33,7 +33,9 @@ namespace api_cinema_challenge.Endpoints
                 Id = targetCustomer.Id,
                 Name = targetCustomer.Name,
                 Email = targetCustomer.Email,
-                Phone = targetCustomer.Phone
+                Phone = targetCustomer.Phone,
+                CreatedAt = targetCustomer.CreatedAt,
+                UpdatedAt = targetCustomer.UpdatedAt
             };
 
             return TypedResults.Ok(customerDto);
@@ -51,7 +53,9 @@ namespace api_cinema_challenge.Endpoints
                 Id = c.Id,
                 Name = c.Name,
                 Email = c.Email,
-                Phone = c.Phone
+                Phone = c.Phone,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt
             }).ToList();
 
             return TypedResults.Ok(customerDto);
@@ -74,7 +78,7 @@ namespace api_cinema_challenge.Endpoints
             var newCustomer = new Customer { Name = model.Name, Email = model.Email, Phone = model.Phone };
             var addedCustomer = await repository.Add(newCustomer);
 
-            var customerDto = new CustomerDto { Id = addedCustomer.Id, Name = addedCustomer.Name, Email=addedCustomer.Email, Phone = addedCustomer.Phone };
+            var customerDto = new CustomerDto { Id = addedCustomer.Id, Name = addedCustomer.Name, Email=addedCustomer.Email, Phone = addedCustomer.Phone, CreatedAt = addedCustomer.CreatedAt, UpdatedAt = addedCustomer.UpdatedAt };
 
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var location = $"{baseUrl}/customers/{addedCustomer.Id}";
@@ -96,7 +100,9 @@ namespace api_cinema_challenge.Endpoints
                 Id = deletedCustomer.Id,
                 Name = deletedCustomer.Name,
                 Email = deletedCustomer.Email,
-                Phone = deletedCustomer.Phone
+                Phone = deletedCustomer.Phone,
+                CreatedAt = deletedCustomer.CreatedAt,
+                UpdatedAt = deletedCustomer.UpdatedAt
             };
 
             return TypedResults.Ok(customerDto);
@@ -127,9 +133,12 @@ namespace api_cinema_challenge.Endpoints
             if (duplicateNameCustomer != null) { return TypedResults.BadRequest($"A customer with the name '{model.Name}' already exists."); }
 
             // update the customer
-            if (model.Name is not null) existingCustomer.Name = model.Name;
-            if (model.Email is not null) existingCustomer.Email = model.Email;
-            if (model.Phone is not null) existingCustomer.Phone = model.Phone;
+            if (!string.IsNullOrWhiteSpace(model.Name)) existingCustomer.Name = model.Name;
+            if (!string.IsNullOrWhiteSpace(model.Email)) existingCustomer.Email = model.Email;
+            if (!string.IsNullOrWhiteSpace(model.Phone)) existingCustomer.Phone = model.Phone;
+
+            // set UpdatedAt to now
+            existingCustomer.UpdatedAt = DateTime.UtcNow;
 
             var updatedCustomer = await repository.Update(id, existingCustomer);
 

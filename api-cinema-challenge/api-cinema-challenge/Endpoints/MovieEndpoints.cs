@@ -33,7 +33,9 @@ namespace api_cinema_challenge.Endpoints
                 Title = targetMovie.Title,
                 Rating = targetMovie.Rating,
                 Description = targetMovie.Description,
-                RuntimeMins = targetMovie.RuntimeMins
+                RuntimeMins = targetMovie.RuntimeMins,
+                CreatedAt = targetMovie.CreatedAt,
+                UpdatedAt = targetMovie.UpdatedAt
             };
 
             return TypedResults.Ok(movieDto);
@@ -51,7 +53,9 @@ namespace api_cinema_challenge.Endpoints
                 Title = m.Title,
                 Rating = m.Rating,
                 Description = m.Description,
-                RuntimeMins = m.RuntimeMins
+                RuntimeMins = m.RuntimeMins,
+                CreatedAt = m.CreatedAt,
+                UpdatedAt = m.UpdatedAt
             }).ToList();
 
             return TypedResults.Ok(movieDtos);
@@ -73,7 +77,7 @@ namespace api_cinema_challenge.Endpoints
             var newMovie = new Movie { Title = model.Title, Rating = model.Rating, Description = model.Description, RuntimeMins = model.RuntimeMins };
             var addedMovie = await repository.Add(newMovie);
 
-            var movieDto = new MovieDto { Id = addedMovie.Id, Title = addedMovie.Title, Rating = addedMovie.Rating, Description = addedMovie.Description, RuntimeMins = addedMovie.RuntimeMins };
+            var movieDto = new MovieDto { Id = addedMovie.Id, Title = addedMovie.Title, Rating = addedMovie.Rating, Description = addedMovie.Description, RuntimeMins = addedMovie.RuntimeMins, CreatedAt = addedMovie.CreatedAt, UpdatedAt = addedMovie.UpdatedAt };
 
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var location = $"{baseUrl}/movies/{addedMovie.Id}";
@@ -97,6 +101,8 @@ namespace api_cinema_challenge.Endpoints
                 Rating = deletedMovie.Rating,
                 Description = deletedMovie.Description,
                 RuntimeMins = deletedMovie.RuntimeMins,
+                CreatedAt = deletedMovie.CreatedAt,
+                UpdatedAt = deletedMovie.UpdatedAt
             };
 
             return TypedResults.Ok(movieDto);
@@ -127,15 +133,18 @@ namespace api_cinema_challenge.Endpoints
             if (duplicateTitleMovie != null) { return TypedResults.BadRequest($"A movie with the title '{model.Title}' already exists."); }
 
             // update the movie
-            if (model.Title is not null) existingMovie.Title = model.Title;
-            if (model.Rating is not null) existingMovie.Rating = model.Rating;
-            if (model.Description is not null) existingMovie.Description = model.Description;
+            if (!string.IsNullOrWhiteSpace(model.Title)) existingMovie.Title = model.Title;
+            if (!string.IsNullOrWhiteSpace(model.Rating)) existingMovie.Rating = model.Rating;
+            if (!string.IsNullOrWhiteSpace(model.Description)) existingMovie.Description = model.Description;
             if (model.RuntimeMins is not null) existingMovie.RuntimeMins = model.RuntimeMins.Value;
+
+            // set UpdatedAt to now
+            existingMovie.UpdatedAt = DateTime.UtcNow;
 
             var updatedMovie = await repository.Update(id, existingMovie);
 
             // generate respone dto
-            var movieDto = new MovieDto { Id = updatedMovie.Id, Title = updatedMovie.Title, Rating = updatedMovie.Rating, Description = updatedMovie.Description, RuntimeMins = updatedMovie.RuntimeMins };
+            var movieDto = new MovieDto { Id = updatedMovie.Id, Title = updatedMovie.Title, Rating = updatedMovie.Rating, Description = updatedMovie.Description, RuntimeMins = updatedMovie.RuntimeMins, CreatedAt = updatedMovie.CreatedAt, UpdatedAt = updatedMovie.UpdatedAt };
 
             var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var location = $"{baseUrl}/movies/{updatedMovie.Id}";
