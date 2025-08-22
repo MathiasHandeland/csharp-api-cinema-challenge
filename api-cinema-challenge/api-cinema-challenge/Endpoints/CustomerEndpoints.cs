@@ -25,8 +25,7 @@ namespace api_cinema_challenge.Endpoints
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> GetCustomerById(int id, IRepository<Customer> repository)
         {
-            var customers = await repository.GetAll();
-            var targetCustomer = customers.FirstOrDefault(c => c.Id == id);
+            var targetCustomer = await repository.GetById(id);
             if (targetCustomer == null) { return TypedResults.NotFound($"Customer with id {id} not found."); }
 
             var customerDto = new CustomerDto
