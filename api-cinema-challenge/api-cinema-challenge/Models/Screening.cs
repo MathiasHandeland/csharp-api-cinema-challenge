@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace api_cinema_challenge.Models
 {
@@ -31,6 +32,8 @@ namespace api_cinema_challenge.Models
         // Foreign key to Movie
         [ForeignKey("Movie")]
         public int MovieId { get; set; }
+
+        [JsonIgnore]
         public Movie Movie { get; set; } = null!;
     }
 }
