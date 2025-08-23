@@ -1,4 +1,5 @@
 ﻿using api_cinema_challenge.DTOs.CustomerDTOs;
+using api_cinema_challenge.DTOs.TicketDTOs;
 using api_cinema_challenge.Models;
 using api_cinema_challenge.Repository;
 using FluentValidation;
@@ -19,6 +20,9 @@ namespace api_cinema_challenge.Endpoints
             customers.MapDelete("/{id}", DeleteCustomer);
             customers.MapPut("/{id}", UpdateCustomer);
 
+            // ticket endpoints
+            customers.MapPost("/{customerId}/screenings/{screeningId}", AddTicket);
+            customers.MapGet("/{customerId}/screenings/{screeningId}", GetTickets);
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -234,5 +238,129 @@ namespace api_cinema_challenge.Endpoints
             return TypedResults.Created(location, response);
 
         }
+
+        // ticket endpoints
+
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public static async Task<IResult> AddTicket(int customerId, int screeningId, IRepository<Customer> customerRepository, IRepository<Screening> screeningRepository, IRepository<Ticket> ticketRepository, [FromBody] TicketPostDto model, IValidator<TicketPostDto> validator, HttpRequest request)
+        {
+            // check if the customer exists
+            var existingCustomer = await customerRepository.GetById(customerId);
+            if (existingCustomer == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"The customer with ID {customerId} does not exist"
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
+            // check if the screening exists
+            var existingScreening = await screeningRepository.GetById(screeningId);
+            if (existingScreening == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"The screening with ID {screeningId} does not exist"
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
+            if (model == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = "Invalid ticket data"
+                };
+                return TypedResults.BadRequest(errorResponse);
+            }
+            var validationResult = await validator.ValidateAsync(model);
+            if (!validationResult.IsValid)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage))
+                };
+                return TypedResults.BadRequest(errorResponse);
+            }
+            // create the ticket
+            var newTicket = new Ticket
+            {
+                NumSeats = model.NumSeats,
+                CustomerId = customerId,
+                ScreeningId = screeningId
+            };
+            var addedTicket = await ticketRepository.Add(newTicket);
+            var ticketDto = new TicketDto
+            {
+                Id = addedTicket.Id,
+                NumSeats = addedTicket.NumSeats,
+                CreatedAt = addedTicket.CreatedAt,
+                UpdatedAt = addedTicket.UpdatedAt
+            };
+            var response = new
+            {
+                status = "success",
+                data = ticketDto
+            };
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+            var location = $"{baseUrl}/tickets/{addedTicket.Id}";
+            return TypedResults.Created(location, response);
+        }
+
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public static async Task<IResult> GetTickets(int customerId, int screeningId, IRepository<Ticket> ticketRepository, IRepository<Customer> customerRepository, IRepository<Screening> screeningRepository)
+        {
+            // Check if customer exists
+            var customer = await customerRepository.GetById(customerId);
+            if (customer == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"Customer with ID {customerId} does not exist"
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
+
+            // Check if screening exists
+            var screening = await screeningRepository.GetById(screeningId);
+            if (screening == null)
+            {
+                var errorResponse = new
+                {
+                    status = "error",
+                    message = $"Screening with ID {screeningId} does not exist"
+                };
+                return TypedResults.NotFound(errorResponse);
+            }
+
+            // Get all tickets for this customer and screening
+            var tickets = await ticketRepository.GetAll();
+            var filteredTickets = tickets
+                .Where(t => t.CustomerId == customerId && t.ScreeningId == screeningId)
+                .Select(t => new
+                {
+                    id = t.Id,
+                    numSeats = t.NumSeats,
+                    createdAt = t.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    updatedAt = t.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss")
+                })
+                .ToList();
+
+            var response = new
+            {
+                status = "success",
+                data = filteredTickets
+            };
+
+            return TypedResults.Ok(response);
+        }
+
     }
 }

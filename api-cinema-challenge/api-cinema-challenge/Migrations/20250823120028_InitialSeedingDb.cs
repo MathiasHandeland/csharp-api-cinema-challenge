@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace api_cinema_challenge.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCascadeDeleteToMovieScreenings : Migration
+    public partial class InitialSeedingDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -73,6 +73,35 @@ namespace api_cinema_challenge.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Tickets",
+                columns: table => new
+                {
+                    TicketId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NumsSeats = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ScreeningId = table.Column<int>(type: "integer", nullable: false),
+                    CustomerId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tickets", x => x.TicketId);
+                    table.ForeignKey(
+                        name: "FK_Tickets_Customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "Customers",
+                        principalColumn: "CustomerId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Tickets_Screenings_ScreeningId",
+                        column: x => x.ScreeningId,
+                        principalTable: "Screenings",
+                        principalColumn: "ScreeningId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "Customers",
                 columns: new[] { "CustomerId", "CreatedAt", "CustomerEmail", "CustomerName", "CustomerPhone", "UpdatedAt" },
@@ -103,15 +132,37 @@ namespace api_cinema_challenge.Migrations
                     { 3, 30, new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc), 3, 7, new DateTime(2023, 3, 21, 18, 45, 0, 0, DateTimeKind.Utc), new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc) }
                 });
 
+            migrationBuilder.InsertData(
+                table: "Tickets",
+                columns: new[] { "TicketId", "CreatedAt", "CustomerId", "NumsSeats", "ScreeningId", "UpdatedAt" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc), 1, 2, 1, new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc) },
+                    { 2, new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc), 2, 4, 1, new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc) }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Screenings_MovieId",
                 table: "Screenings",
                 column: "MovieId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_CustomerId",
+                table: "Tickets",
+                column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_ScreeningId",
+                table: "Tickets",
+                column: "ScreeningId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Tickets");
+
             migrationBuilder.DropTable(
                 name: "Customers");
 

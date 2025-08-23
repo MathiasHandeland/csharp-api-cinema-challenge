@@ -12,8 +12,8 @@ using api_cinema_challenge.Data;
 namespace api_cinema_challenge.Migrations
 {
     [DbContext(typeof(CinemaContext))]
-    [Migration("20250822143258_AddCascadeDeleteToMovieScreenings")]
-    partial class AddCascadeDeleteToMovieScreenings
+    [Migration("20250823120028_InitialSeedingDb")]
+    partial class InitialSeedingDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -235,6 +235,62 @@ namespace api_cinema_challenge.Migrations
                         });
                 });
 
+            modelBuilder.Entity("api_cinema_challenge.Models.Ticket", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("TicketId");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NumSeats")
+                        .HasColumnType("integer")
+                        .HasColumnName("NumsSeats");
+
+                    b.Property<int>("ScreeningId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ScreeningId");
+
+                    b.ToTable("Tickets");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
+                            CustomerId = 1,
+                            NumSeats = 2,
+                            ScreeningId = 1,
+                            UpdatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
+                            CustomerId = 2,
+                            NumSeats = 4,
+                            ScreeningId = 1,
+                            UpdatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc)
+                        });
+                });
+
             modelBuilder.Entity("api_cinema_challenge.Models.Screening", b =>
                 {
                     b.HasOne("api_cinema_challenge.Models.Movie", "Movie")
@@ -244,6 +300,25 @@ namespace api_cinema_challenge.Migrations
                         .IsRequired();
 
                     b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("api_cinema_challenge.Models.Ticket", b =>
+                {
+                    b.HasOne("api_cinema_challenge.Models.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("api_cinema_challenge.Models.Screening", "Screening")
+                        .WithMany()
+                        .HasForeignKey("ScreeningId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Screening");
                 });
 
             modelBuilder.Entity("api_cinema_challenge.Models.Movie", b =>

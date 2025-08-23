@@ -1,5 +1,7 @@
 using api_cinema_challenge.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Sockets;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace api_cinema_challenge.Data
 {
@@ -100,6 +102,28 @@ namespace api_cinema_challenge.Data
                     CreatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
                     UpdatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
                     MovieId = 3
+                }
+            );
+
+            // ticket seed data
+            modelBuilder.Entity<Ticket>().HasData(
+                new Ticket
+                {
+                    Id = 1,
+                    NumSeats = 2,
+                    CustomerId = 1,
+                    ScreeningId = 1,
+                    CreatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
+                    UpdatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc)
+                },
+                new Ticket
+                {
+                    Id = 2,
+                    NumSeats = 4,
+                    CustomerId = 2,
+                    ScreeningId = 1,
+                    CreatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc),
+                    UpdatedAt = new DateTime(2023, 3, 14, 11, 1, 56, 633, DateTimeKind.Utc)
                 }
             );
         }
