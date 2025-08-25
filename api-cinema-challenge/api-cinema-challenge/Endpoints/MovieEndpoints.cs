@@ -118,7 +118,7 @@ namespace api_cinema_challenge.Endpoints
                 return TypedResults.BadRequest(errorResponse);
             }
 
-            var newMovie = new Movie { Title = model.Title, Rating = model.Rating, Description = model.Description, RuntimeMins = model.RuntimeMins };
+            var newMovie = new Movie { Title = model.Title, Rating = model.Rating, Description = model.Description, RuntimeMins = model.RuntimeMins, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
             var addedMovie = await repository.Add(newMovie);
 
             // add optional screenings
@@ -131,7 +131,9 @@ namespace api_cinema_challenge.Endpoints
                         ScreenNumber = screeningDto.ScreenNumber,
                         Capacity = screeningDto.Capacity,
                         StartsAt = screeningDto.StartsAt,
-                        MovieId = addedMovie.Id
+                        MovieId = addedMovie.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     };
                     await screeningRepository.Add(newScreening);
                 }
@@ -312,7 +314,9 @@ namespace api_cinema_challenge.Endpoints
                 ScreenNumber = model.ScreenNumber,
                 Capacity = model.Capacity,
                 StartsAt = model.StartsAt,
-                MovieId = id
+                MovieId = id,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             var addedScreening = await screeningRepository.Add(newScreening);

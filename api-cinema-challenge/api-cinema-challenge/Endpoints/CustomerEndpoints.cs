@@ -109,7 +109,7 @@ namespace api_cinema_challenge.Endpoints
                 return TypedResults.BadRequest(errorResponse);
             }
 
-            var newCustomer = new Customer { Name = model.Name, Email = model.Email, Phone = model.Phone };
+            var newCustomer = new Customer { Name = model.Name, Email = model.Email, Phone = model.Phone, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
             var addedCustomer = await repository.Add(newCustomer);
 
             var customerDto = new CustomerDto { Id = addedCustomer.Id, Name = addedCustomer.Name, Email=addedCustomer.Email, Phone = addedCustomer.Phone, CreatedAt = addedCustomer.CreatedAt, UpdatedAt = addedCustomer.UpdatedAt };
@@ -292,7 +292,9 @@ namespace api_cinema_challenge.Endpoints
             {
                 NumSeats = model.NumSeats,
                 CustomerId = customerId,
-                ScreeningId = screeningId
+                ScreeningId = screeningId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
             var addedTicket = await ticketRepository.Add(newTicket);
             var ticketDto = new TicketDto

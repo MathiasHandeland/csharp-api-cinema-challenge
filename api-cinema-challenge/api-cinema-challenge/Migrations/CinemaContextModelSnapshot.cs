@@ -26,33 +26,27 @@ namespace api_cinema_challenge.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("CustomerId");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreatedAt");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("CustomerEmail");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("CustomerName");
+                        .HasColumnType("text");
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("CustomerPhone");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("UpdatedAt");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -302,7 +296,7 @@ namespace api_cinema_challenge.Migrations
             modelBuilder.Entity("api_cinema_challenge.Models.Ticket", b =>
                 {
                     b.HasOne("api_cinema_challenge.Models.Customer", "Customer")
-                        .WithMany()
+                        .WithMany("Tickets")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -316,6 +310,11 @@ namespace api_cinema_challenge.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("Screening");
+                });
+
+            modelBuilder.Entity("api_cinema_challenge.Models.Customer", b =>
+                {
+                    b.Navigation("Tickets");
                 });
 
             modelBuilder.Entity("api_cinema_challenge.Models.Movie", b =>
