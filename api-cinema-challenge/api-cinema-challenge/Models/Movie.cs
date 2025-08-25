@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace api_cinema_challenge.Models
@@ -33,6 +33,6 @@ namespace api_cinema_challenge.Models
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation property for related screenings
-        public ICollection<Screening> Screenings { get; set; }
+        public ICollection<Screening> Screenings { get; set; } = new List<Screening>();
     }
 }

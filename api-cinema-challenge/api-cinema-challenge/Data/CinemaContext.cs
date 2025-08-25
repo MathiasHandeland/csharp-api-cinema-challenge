@@ -1,15 +1,20 @@
 ﻿using api_cinema_challenge.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 
 namespace api_cinema_challenge.Data
 {
-    public class CinemaContext : DbContext
+    public class CinemaContext : IdentityUserContext<ApplicationUser>
     {
         public CinemaContext(DbContextOptions<CinemaContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
+
             ModelSeeder.Seed(modelBuilder); // seed initial data
 
             // when a movie is deleted, delete all screenings associated with it

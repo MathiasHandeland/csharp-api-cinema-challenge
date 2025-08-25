@@ -4,6 +4,7 @@ using api_cinema_challenge.Models;
 using api_cinema_challenge.Repository;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace api_cinema_challenge.Endpoints
 {
@@ -13,19 +14,20 @@ namespace api_cinema_challenge.Endpoints
         {
             var movies = app.MapGroup("movies");
 
-            movies.MapGet("/{id}", GetMovieById);
-            movies.MapGet("/", GetMovies);
-            movies.MapPost("/", AddMovie);
-            movies.MapDelete("/{id}", DeleteMovie);
-            movies.MapPut("/{id}", UpdateMovie);
+            movies.MapGet("/{id}", GetMovieById).RequireAuthorization();
+            movies.MapGet("/", GetMovies).RequireAuthorization();
+            movies.MapPost("/", AddMovie).RequireAuthorization();
+            movies.MapDelete("/{id}", DeleteMovie).RequireAuthorization("Admin");
+            movies.MapPut("/{id}", UpdateMovie).RequireAuthorization("Admin");
 
             // screening endpoints
-            movies.MapGet("/{id}/screenings", GetScreeningsForMovie);
-            movies.MapPost("/{id}/screenings", AddScreeningForMovie);
-            movies.MapGet("/{movieId}/screenings/{screeningId}", GetScreeningForMovie);
+            movies.MapGet("/{id}/screenings", GetScreeningsForMovie).RequireAuthorization();
+            movies.MapPost("/{id}/screenings", AddScreeningForMovie).RequireAuthorization("Admin");
+            movies.MapGet("/{movieId}/screenings/{screeningId}", GetScreeningForMovie).RequireAuthorization();
 
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> GetMovieById(int id, IRepository<Movie> repository)
@@ -61,6 +63,7 @@ namespace api_cinema_challenge.Endpoints
             return TypedResults.Ok(response);
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> GetMovies(IRepository<Movie> repository)
@@ -97,6 +100,7 @@ namespace api_cinema_challenge.Endpoints
 
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public static async Task<IResult> AddMovie(IRepository<Movie> repository, [FromBody] MoviePostDto model, HttpRequest request, IValidator<MoviePostDto> validator, IRepository<Screening> screeningRepository)
@@ -153,10 +157,13 @@ namespace api_cinema_challenge.Endpoints
 
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> DeleteMovie(int id, IRepository<Movie> repository)
+        public static async Task<IResult> DeleteMovie(int id, IRepository<Movie> repository, ClaimsPrincipal user)
         {
+            var username = user.Identity?.Name;
+
             var targetMovie = await repository.GetById(id);
             if (targetMovie == null)
             {
@@ -179,17 +186,20 @@ namespace api_cinema_challenge.Endpoints
             var response = new
             {
                 status = "success",
+                deletedBy = username,
                 data = movieDto
             };
 
             return TypedResults.Ok(response);
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> UpdateMovie(int id, IRepository<Movie> repository, [FromBody] MoviePutDto model, IValidator<MoviePutDto> validator, HttpRequest request)
+        public static async Task<IResult> UpdateMovie(int id, IRepository<Movie> repository, [FromBody] MoviePutDto model, IValidator<MoviePutDto> validator, HttpRequest request, ClaimsPrincipal user)
         {
+            var username = user.Identity?.Name;
             // check if the movie we want to update exists
             var existingMovie = await repository.GetById(id);
             if (existingMovie == null)
@@ -242,6 +252,7 @@ namespace api_cinema_challenge.Endpoints
             var response = new
             {
                 status = "success",
+                updatedBy = username,
                 data = movieDto
             };
 
@@ -252,6 +263,8 @@ namespace api_cinema_challenge.Endpoints
         }
 
         // screening endpoints
+
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> GetScreeningsForMovie(int id, IRepository<Screening> screeningRepository)
@@ -288,10 +301,13 @@ namespace api_cinema_challenge.Endpoints
             return TypedResults.Ok(response);
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public static async Task<IResult> AddScreeningForMovie(int id, IRepository<Screening> screeningRepository, [FromBody] ScreeningPostDto model, IValidator<ScreeningPostDto> validator, HttpRequest request)
+        public static async Task<IResult> AddScreeningForMovie(int id, IRepository<Screening> screeningRepository, [FromBody] ScreeningPostDto model, IValidator<ScreeningPostDto> validator, HttpRequest request, ClaimsPrincipal user)
         {
+            var username = user.Identity?.Name;
+
             if (model == null)
             {
                 var errorResponse = new { status = "error", message = "Invalid screening data" };
@@ -334,6 +350,7 @@ namespace api_cinema_challenge.Endpoints
             var response = new
             {
                 status = "success",
+                addedBy = username,
                 data = screeningDto
             };
 
@@ -342,6 +359,7 @@ namespace api_cinema_challenge.Endpoints
             return TypedResults.Created(location, response);
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> GetScreeningForMovie(int movieId, int screeningId, IRepository<Screening> screeningRepository)

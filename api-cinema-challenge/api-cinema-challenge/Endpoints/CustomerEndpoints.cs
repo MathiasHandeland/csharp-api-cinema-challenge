@@ -5,6 +5,7 @@ using api_cinema_challenge.Repository;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace api_cinema_challenge.Endpoints
 {
@@ -14,17 +15,18 @@ namespace api_cinema_challenge.Endpoints
         {
             var customers = app.MapGroup("customers");
 
-            customers.MapGet("/{id}", GetCustomerById);
-            customers.MapGet("/", GetCustomers);
-            customers.MapPost("/", AddCustomer);
-            customers.MapDelete("/{id}", DeleteCustomer);
-            customers.MapPut("/{id}", UpdateCustomer);
+            customers.MapGet("/{id}", GetCustomerById).RequireAuthorization();
+            customers.MapGet("/", GetCustomers).RequireAuthorization("Admin");
+            customers.MapPost("/", AddCustomer).RequireAuthorization(); // both roles can add customers
+            customers.MapDelete("/{id}", DeleteCustomer).RequireAuthorization("Admin");
+            customers.MapPut("/{id}", UpdateCustomer).RequireAuthorization(); 
 
             // ticket endpoints
-            customers.MapPost("/{customerId}/screenings/{screeningId}", AddTicket);
-            customers.MapGet("/{customerId}/screenings/{screeningId}", GetTickets);
+            customers.MapPost("/{customerId}/screenings/{screeningId}", AddTicket).RequireAuthorization();
+            customers.MapGet("/{customerId}/screenings/{screeningId}", GetTickets).RequireAuthorization();
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> GetCustomerById(int id, IRepository<Customer> repository)
@@ -59,10 +61,13 @@ namespace api_cinema_challenge.Endpoints
             return TypedResults.Ok(response);
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> GetCustomers(IRepository<Customer> repository)
+        public static async Task<IResult> GetCustomers(IRepository<Customer> repository, ClaimsPrincipal user)
         {
+            var username = user.Identity?.Name;
+
             var customers = await repository.GetAll();
             if (customers == null || !customers.Any())
             {
@@ -85,6 +90,7 @@ namespace api_cinema_challenge.Endpoints
             var response = new
             {
                 status = "success",
+                requestedBy = username, // included who requested the customer list
                 data = customerDto
             };
 
@@ -92,6 +98,7 @@ namespace api_cinema_challenge.Endpoints
 
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public static async Task<IResult> AddCustomer(IRepository<Customer> repository, [FromBody] CustomerPostDto model, IValidator<CustomerPostDto> validator, HttpRequest request)
@@ -126,10 +133,13 @@ namespace api_cinema_challenge.Endpoints
         
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> DeleteCustomer(int id, IRepository<Customer> repository)
+        public static async Task<IResult> DeleteCustomer(int id, IRepository<Customer> repository, ClaimsPrincipal user)
         {
+            var username = user.Identity?.Name;
+
             var targetCustomer = await repository.GetById(id);
             if (targetCustomer == null)
             {
@@ -156,12 +166,14 @@ namespace api_cinema_challenge.Endpoints
             var response = new
             {
                 status = "success",
+                deletedBy = username, // included who deleted the customer
                 data = customerDto
             };
 
             return TypedResults.Ok(response);
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -241,6 +253,7 @@ namespace api_cinema_challenge.Endpoints
 
         // ticket endpoints
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -314,6 +327,7 @@ namespace api_cinema_challenge.Endpoints
             return TypedResults.Created(location, response);
         }
 
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> GetTickets(int customerId, int screeningId, IRepository<Ticket> ticketRepository, IRepository<Customer> customerRepository, IRepository<Screening> screeningRepository)
